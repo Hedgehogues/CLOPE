@@ -10,14 +10,15 @@ with open('data/users.pickle', 'rb') as f:
 
 dataNew = {}
 index = 0
+countElements = 50000
 for item in dataGroups:
-    if index > 0 and index > 50000:
+    if countElements > 0 and index > countElements:
         break
     dataNew[item] = dataGroups[item]
     index += 1
 dataGroups = copy.deepcopy(dataNew)
-repulsion = 1.002
-noiseLimit = 10
+repulsion = 1.0015
+noiseLimit = -1
 isSaveHistory = False
 iter = 10000
 countTransfer = 1000000

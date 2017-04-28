@@ -212,13 +212,30 @@ class CData:
 
         return maxValueIndex
 
+    # Адаптивное вычисление порога шума. Порог вычистывается относительно медианы размеров кластеров (в числе
+    # транзакций). Берётся 3/4 медианы
+    def GetNoiseLimit(self):
+        sizeClusters = []
+        for item in self.Clusters:
+            sizeClusters.append(self.Clusters[item].CountTransactions)
+        sorted(sizeClusters)
+        medianElement = int(3 * len(sizeClusters) / 4) + 1
+        if len(sizeClusters) < 5:
+            limit = 10
+        else:
+            limit = sizeClusters[medianElement]
+        return limit
+
     # Инициализация алгоритма
     # Input parametres:
     # data -- слайс с транзакциями
     # isPrint -- нужно ли печатать информацию о ходе выполнения (0 -- не нужно, если > 0 -- печатаем каждый isPrint раз)
     # repulsion -- вещественное число, обозначающие отталкивание кластеров в смысле CLOPE
     # isSaveHistory -- флаг, выставляемый при необходимости записи истории количества транзакций
-    def Init(self, data, isPrint, repulsion = 2, isSaveHistory = True, isNoiseReduction = 0):
+    # isNoiseReduction -- подавление шума (порог соответствует числу элементов в кластере, при котором он уничтожается).
+    #                     Если isNoiseReduction == -1, то порог выбирается адаптивно (всё то, что больше медианы
+    #                     остаётся)
+    def Init(self, data, isPrint, repulsion = 2, isSaveHistory = True, isNoiseReduction = -1):
         index = 0
         for item in data:
             self.AddNewTransaction(data[item], item, repulsion, isSaveHistory)
@@ -226,9 +243,13 @@ class CData:
             if isPrint > 0 and index % isPrint == 0:
                 print("Итерация: ", self.Iteration, ". Номер шага", index, ". Число кластеров: ", len(self.Clusters))
 
+        if isNoiseReduction < 0:
+            isNoiseReduction = self.GetNoiseLimit()
         # Удаляем все шумовые кластеры (после инициализации не бывает пустых классов, поэтому знак строго больше)
         if isNoiseReduction > 0:
             self.NoiseReduction(isNoiseReduction)
+
+        print(isNoiseReduction)
 
         self.Iteration = 1
 
@@ -238,9 +259,12 @@ class CData:
     # isPrint -- нужно ли печатать информацию о ходе выполнения (0 -- не нужно, если > 0 -- печатаем каждый isPrint раз)
     # repulsion -- вещественное число, обозначающие отталкивание кластеров в смысле CLOPE
     # isSaveHistory -- флаг, выставляемый при необходимости записи истории количества транзакций
+    # isNoiseReduction -- подавление шума (порог соответствует числу элементов в кластере, при котором он уничтожается).
+    #                     Если isNoiseReduction == -1, то порог выбирается адаптивно (всё то, что больше медианы
+    #                     остаётся)
     # Returned parameter:
     # Возвращается число операций по перенесению транзакции из кластера в кластер
-    def NextStep(self, data, isPrint, repulsion = 2, isSaveHistory = True, isNoiseReduction = 0):
+    def NextStep(self, data, isPrint, repulsion = 2, isSaveHistory = True, isNoiseReduction = -1):
         index = 0
         eps = 0
         for item in data:
@@ -251,8 +275,10 @@ class CData:
         self.Iteration += 1
 
         # Удаляем все пустые (или шумовые, если isNoiseReduction > 0) кластеры
-        if isNoiseReduction >= 0:
-            self.NoiseReduction(isNoiseReduction)
+        if isNoiseReduction < 0:
+            isNoiseReduction = self.GetNoiseLimit()
+        self.NoiseReduction(isNoiseReduction)
+        print(isNoiseReduction)
         return eps
 
     # Рисуем график, демонстрирующий количество транзакций в различных классах
