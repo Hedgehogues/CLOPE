@@ -3,6 +3,7 @@
 import CLOPE
 
 
+
 # Прочитываем данные
 f = open ('data/agaricus-lepiota.data.txt', 'r')
 # Разделяем данные
@@ -13,20 +14,21 @@ for exampleIndex in range(0, len(mushroomsStart)):
        # Первый столбец -- признак (съедобные (e) или нет(p)). Данный столбец является целым классом. По этому столбцу
        # проверяется качество тестирования
        if index != 0:
-           mushrooms[exampleIndex][index] = mushroomsStart[exampleIndex][index] + str(index)
+           mushrooms[exampleIndex][index - 1] = mushroomsStart[exampleIndex][index] + str(index)
        else:
-           mushrooms[exampleIndex] = [''] * 23
+           mushrooms[exampleIndex] = [''] * 22
 
 clope = CLOPE.CData()
 # Начальные данные
 iter = 1000
 repulsion = 2.7
 isSaveHist = True
+noiseLimit = 0
 # Инициализируем алгоритм
-clope.Init(mushrooms, iter, repulsion, isSaveHist)
+clope.Init(mushrooms, iter, repulsion, isSaveHist, noiseLimit)
 clope.PrintHistoryCount()
 # Итерируемся
-while clope.NextStep(mushrooms, iter, repulsion, isSaveHist) > 0:
+while clope.NextStep(mushrooms, iter, repulsion, isSaveHist, noiseLimit) > 0:
     clope.PrintHistoryCount()
 
 # Выводим распределение по кластерам съедобных и несъедобных грибов

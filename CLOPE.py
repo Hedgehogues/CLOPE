@@ -117,7 +117,7 @@ class CData:
     # Input parametres:
     # limit -- уровень шума кластеров
     def NoiseReduction(self, limit):
-        # Удаляем все пустые кластеры
+        # Удаляем все пустые и зашумлённые кластеры
         newClusters = {}
         for item in self.Clusters:
             if self.Clusters[item].CountTransactions > limit:
@@ -192,23 +192,27 @@ class CData:
         valueGoalFunction = self.DeltaAddTransaction(transaction, self.MaxClusterNumber, r)
         if valueGoalFunction > maxValue:
             maxValueIndex = self.MaxClusterNumber
-        self.MaxClusterNumber += 1
 
         # Запоминаем, в каком кластере лежит текущая транзакция
         self.Transaction[id] = maxValueIndex
         if maxValueIndex != len(self.Clusters) - 1:
-            self.MaxClusterNumber -= 1
             del self.Clusters[self.MaxClusterNumber]
         else:
             if isSaveHistory:
-                self.Clusters[-1].HistoryCountTransact = np.array([0] * len(self.Clusters[0].HistoryCountTransact))
+                self.Clusters[self.MaxClusterNumber].HistoryCountTransact = np.array([0] * len(self.Clusters[0].HistoryCountTransact))
+            self.MaxClusterNumber += 1
 
         # Добавляем транзакцию в необходимый кластер
         self.Clusters[maxValueIndex].AddTransaction(transaction)
 
         if isSaveHistory:
             for itemCluster in self.Clusters:
-                itemCluster.HistoryCountTransact = np.append(itemCluster.HistoryCountTransact, itemCluster.CountTransactions)
+                self.Clusters[itemCluster].HistoryCountTransact = \
+                    np.append \
+                    (
+                        self.Clusters[itemCluster].HistoryCountTransact,
+                        self.Clusters[itemCluster].CountTransactions
+                    )
 
         return maxValueIndex
 
@@ -249,8 +253,6 @@ class CData:
         if isNoiseReduction > 0:
             self.NoiseReduction(isNoiseReduction)
 
-        print(isNoiseReduction)
-
         self.Iteration = 1
 
     # Выполнение алгоритма. Выполнение следующего шага
@@ -278,17 +280,19 @@ class CData:
         if isNoiseReduction < 0:
             isNoiseReduction = self.GetNoiseLimit()
         self.NoiseReduction(isNoiseReduction)
-        print(isNoiseReduction)
         return eps
 
     # Рисуем график, демонстрирующий количество транзакций в различных классах
     def PrintHistoryCount(self):
-        for itemCluster in self.Clusters:
-            x = np.array(range(0, len(self.Transaction) * self.Iteration))
+        # Длина всех векторов с историями одинакова. В связи с этим, берём длину первого
+        lenHistory = len(list(self.Clusters.values())[0].HistoryCountTransact)
+        for indexCluster in self.Clusters:
+            itemCluster = self.Clusters[indexCluster]
+            x = np.array(range(0, lenHistory))
             if len(itemCluster.HistoryCountTransact) != 0:
                 y = itemCluster.HistoryCountTransact
             else:
-                y = [0] * len(self.Transaction) * self.Iteration
+                y = np.array(range(0, lenHistory))
             plt.plot(x, y)
         plt.xlabel(u"Iteration number")
         plt.ylabel(u"Count transactions")
