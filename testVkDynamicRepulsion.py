@@ -12,7 +12,7 @@ with open('data/users.pickle', 'rb') as f:
 # Посредствам задания порога countElements, можно выделить первые countElements транзакция из исходного множества данных
 dataNew = {}
 index = 0
-countElements = -1
+countElements = 50000
 for item in dataGroups:
     if countElements > 0 and index > countElements:
         break
@@ -32,9 +32,14 @@ stopLimit = 300
 clope = CLOPE.CData()
 clope.Init(dataGroups, iter, repulsion, isSaveHistory, noiseLimit)
 print("Инициализация завершена. Число кластеров: ", len(clope.Clusters))
-while countTransfer > stopLimit:
-    countTransfer = clope.NextStep(dataGroups, iter, repulsion, isSaveHistory, noiseLimit)
-    print("Число перемещений между кластерами", countTransfer, ". Число кластеров: ", len(clope.Clusters))
+for iteration in range(0, 10):
+    print("Iteration: ", iteration)
+    while countTransfer > stopLimit:
+        countTransfer = clope.NextStep(dataGroups, iter, repulsion, isSaveHistory, noiseLimit)
+        print("Число перемещений между кластерами", countTransfer, ". Число кластеров: ", len(clope.Clusters))
+    repulsion += 9
 
-with open('data/CLOPE_users' + '.r=' + str(repulsion) + '.stopLimit=' + str(stopLimit) + '.pickle', 'wb') as f:
-    pickle.dump(clope, f)
+exit(0)
+
+# with open('data/CLOPE_users' + '.r=' + str(repulsion) + '.stopLimit=' + str(stopLimit) + '.pickle', 'wb') as f:
+#     pickle.dump(clope, f)

@@ -247,6 +247,7 @@ class CData:
             if isPrint > 0 and index % isPrint == 0:
                 print("Итерация: ", self.Iteration, ". Номер шага", index, ". Число кластеров: ", len(self.Clusters))
 
+        # Получаем оптимальный порог шума
         if isNoiseReduction < 0:
             isNoiseReduction = self.GetNoiseLimit()
         # Удаляем все шумовые кластеры (после инициализации не бывает пустых классов, поэтому знак строго больше)
