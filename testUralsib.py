@@ -9,16 +9,16 @@ with open('data/clope_features.json', 'r') as f:
 clope = CLOPE.CData()
 # Начальные данные
 iter = 1000
-repulsion = 2
+repulsion = 10
 isSaveHist = True
 noiseLimit = 0
 max_count_clusters = 10
 random_state = 41
 # Инициализируем алгоритм
-clope.Init(clients, iter, repulsion, isSaveHist, noiseLimit, max_count_clusters, random_state)
+clope.Init(clients, iter, 10, isSaveHist, noiseLimit, max_count_clusters, random_state)
 clope.PrintHistoryCount()
 # Итерируемся
-while clope.NextStep(clients, iter, repulsion, isSaveHist, noiseLimit, max_count_clusters, random_state) > 0:
+while clope.NextStep(clients, iter, 2, isSaveHist, 5000, max_count_clusters, random_state) > 0:
     clope.PrintHistoryCount()
 
 # Выводим распределение по кластерам съедобных и несъедобных грибов

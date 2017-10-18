@@ -278,6 +278,12 @@ class CData:
     # Возвращается число операций по перенесению транзакции из кластера в кластер
     def NextStep(self, data, isPrint, repulsion = 2, isSaveHistory = True, isNoiseReduction = -1,
                  max_count_clusters=None, random_state=42):
+
+        # Удаляем все пустые (или шумовые, если isNoiseReduction > 0) кластеры
+        if isNoiseReduction < 0:
+            isNoiseReduction = self.GetNoiseLimit()
+        self.NoiseReduction(isNoiseReduction)
+
         index = 0
         eps = 0
         keys = sorted(data.keys())
@@ -290,9 +296,6 @@ class CData:
                 print("Итерация: ", self.Iteration, ". Номер шага", index, ". Число кластеров: ", len(self.Clusters))
         self.Iteration += 1
 
-        # Удаляем все пустые (или шумовые, если isNoiseReduction > 0) кластеры
-        if isNoiseReduction < 0:
-            isNoiseReduction = self.GetNoiseLimit()
         self.NoiseReduction(isNoiseReduction)
         return eps
 
