@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-
 import CLOPE
-
+import numpy
 
 
 # Прочитываем данные
 f = open ('data/agaricus-lepiota.data.txt', 'r')
 # Разделяем данные
 mushroomsStart = [item.replace('\n', '').split(',') for item in f.readlines()]
+numpy.random.shuffle(mushroomsStart)
 mushrooms = {}
 for exampleIndex in range(0, len(mushroomsStart)):
    for index in range(0, len(mushroomsStart[exampleIndex])):
@@ -33,7 +33,7 @@ while clope.NextStep(mushrooms, iter, repulsion, isSaveHist, noiseLimit) > 0:
 
 # Выводим распределение по кластерам съедобных и несъедобных грибов
 answ = []
-for item in range(0, len(clope.Clasters)):
+for item in range(0, len(clope.Clusters)):
     answ.append({'e': 0, 'p': 0})
 for itemTransact in clope.Transaction:
     classter = clope.Transaction[itemTransact]

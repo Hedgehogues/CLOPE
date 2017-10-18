@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -154,7 +153,7 @@ class CData:
     # isSaveHistory -- флаг, выставляемый при необходимости записи истории количества транзакций
     # Returned value:
     # Возвращает значение, отвечающие наличию изменения кластера или его отсутствию
-    def ModifyTransactions(self, transaction, id, repulsion = 2, isSaveHistory = True):
+    def ModifyTransactions(self, transaction, id, repulsion = 2, isSaveHistory = True, max_count_clusters=None):
         # Смотрим, где данная транзакция лежит сейчас
         clusterNumber = self.Transaction[id]
         # Если транзакция относится к шумовому кластеру, то не пытаемся её поменять
@@ -164,7 +163,7 @@ class CData:
         self.Clusters[clusterNumber].RemoveTransaction(transaction)
         # Рассматриваем транзакцию как вновь пришедшую и добавляем в тот кластер, где значение целевой функции доставит
         # максимум
-        return int(self.AddNewTransaction(transaction, id, repulsion, isSaveHistory) != clusterNumber)
+        return int(self.AddNewTransaction(transaction, id, repulsion, isSaveHistory, max_count_clusters) != clusterNumber)
 
     # Добавление новой транзакции
     # Пытаемся перераспределить транзакцию (transaction) с номером id в другой класс так, чтобы целевая функция приняла
@@ -176,22 +175,25 @@ class CData:
     # isSaveHistory -- флаг, выставляемый при необходимости записи истории количества транзакций
     # Returned parameter:
     # Возвращается номер кластера, в который была добавлена текущая транзакция
-    def AddNewTransaction(self, transaction, id, repulsion = 2, isSaveHistory = True):
+    def AddNewTransaction(self, transaction, id, repulsion = 2, isSaveHistory = True, max_count_clusters=None):
         r = repulsion
-        maxValue = -1
+        maxValue = None
         maxValueIndex = -1
         self.CountTransactions += 1
+
         # Ищем кластер, на котором будет достигнуто максимальное значение изменения целевой функции
         for clusterNumber in self.Clusters:
             delta = self.DeltaAddTransaction(transaction, clusterNumber, r)
-            if delta > 0 and delta > maxValue:
+            if (delta > 0 or max_count_clusters is not None) and (maxValue is None or delta > maxValue):
                 maxValueIndex = clusterNumber
                 maxValue = delta
+
         # Добавляем транзакцию в новый кластер и смотрим на результат
         self.Clusters[self.MaxClusterNumber] = CCluster()
-        valueGoalFunction = self.DeltaAddTransaction(transaction, self.MaxClusterNumber, r)
-        if valueGoalFunction > maxValue:
-            maxValueIndex = self.MaxClusterNumber
+        if max_count_clusters is None or len(self.Clusters) <= max_count_clusters:
+            valueGoalFunction = self.DeltaAddTransaction(transaction, self.MaxClusterNumber, r)
+            if maxValue is None or valueGoalFunction > maxValue:
+                maxValueIndex = self.MaxClusterNumber
 
         # Запоминаем, в каком кластере лежит текущая транзакция
         self.Transaction[id] = maxValueIndex
@@ -199,10 +201,13 @@ class CData:
             del self.Clusters[self.MaxClusterNumber]
         else:
             if isSaveHistory:
-                self.Clusters[self.MaxClusterNumber].HistoryCountTransact = np.array([0] * len(self.Clusters[0].HistoryCountTransact))
+                self.Clusters[self.MaxClusterNumber].HistoryCountTransact = \
+                    np.array([0] * len(self.Clusters[0].HistoryCountTransact))
             self.MaxClusterNumber += 1
 
         # Добавляем транзакцию в необходимый кластер
+        if maxValueIndex == -1:
+            print(1)
         self.Clusters[maxValueIndex].AddTransaction(transaction)
 
         if isSaveHistory:
@@ -239,10 +244,14 @@ class CData:
     # isNoiseReduction -- подавление шума (порог соответствует числу элементов в кластере, при котором он уничтожается).
     #                     Если isNoiseReduction == -1, то порог выбирается адаптивно (всё то, что больше медианы
     #                     остаётся)
-    def Init(self, data, isPrint, repulsion = 2, isSaveHistory = True, isNoiseReduction = -1):
+    def Init(self, data, isPrint, repulsion = 2, isSaveHistory = True, isNoiseReduction = -1, max_count_clusters=None,
+             random_state=42):
         index = 0
-        for item in data:
-            self.AddNewTransaction(data[item], item, repulsion, isSaveHistory)
+        keys = sorted(data.keys())
+        np.random.seed(random_state)
+        np.random.shuffle(keys)
+        for item in keys:
+            self.AddNewTransaction(data[item], item, repulsion, isSaveHistory, max_count_clusters)
             index += 1
             if isPrint > 0 and index % isPrint == 0:
                 print("Итерация: ", self.Iteration, ". Номер шага", index, ". Число кластеров: ", len(self.Clusters))
@@ -267,11 +276,15 @@ class CData:
     #                     остаётся)
     # Returned parameter:
     # Возвращается число операций по перенесению транзакции из кластера в кластер
-    def NextStep(self, data, isPrint, repulsion = 2, isSaveHistory = True, isNoiseReduction = -1):
+    def NextStep(self, data, isPrint, repulsion = 2, isSaveHistory = True, isNoiseReduction = -1,
+                 max_count_clusters=None, random_state=42):
         index = 0
         eps = 0
-        for item in data:
-            eps += self.ModifyTransactions(data[item], item, repulsion, isSaveHistory)
+        keys = sorted(data.keys())
+        np.random.seed(random_state)
+        np.random.shuffle(keys)
+        for item in keys:
+            eps += self.ModifyTransactions(data[item], item, repulsion, isSaveHistory, max_count_clusters)
             index += 1
             if isPrint > 0 and index % isPrint == 0:
                 print("Итерация: ", self.Iteration, ". Номер шага", index, ". Число кластеров: ", len(self.Clusters))
