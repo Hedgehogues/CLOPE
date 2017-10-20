@@ -27,12 +27,12 @@ for item in clope.Transaction:
 
 # Выполнение алгоритма для шумовых кластеров
 stopLimit = 0
-clopeNoise = CLOPE.CData()
-clopeNoise.Init(noiseTransaction, iter, repulsion, isSaveHistory, noiseLimit)
-print("Инициализация завершена. Число кластеров: ", len(clopeNoise.Clusters), ". Число шумовых кластеров при базовой кластеризации: ", len(clope.NoiseClusters))
+clopeNoise = CLOPE.Clope()
+clopeNoise.init(noiseTransaction, iter, repulsion, isSaveHistory, noiseLimit)
+print("Инициализация завершена. Число кластеров: ", len(clopeNoise.clusters), ". Число шумовых кластеров при базовой кластеризации: ", len(clope.NoiseClusters))
 while countTransfer > stopLimit:
-    countTransfer = clopeNoise.NextStep(noiseTransaction, iter, repulsion, isSaveHistory, noiseLimit)
-    print("Число перемещений между кластерами", countTransfer, ". Число кластеров: ", len(clopeNoise.Clusters), ". Число шумовых кластеров при базовой кластеризации: ", len(clope.NoiseClusters))
+    countTransfer = clopeNoise.next_step(noiseTransaction, iter, repulsion, isSaveHistory, noiseLimit)
+    print("Число перемещений между кластерами", countTransfer, ". Число кластеров: ", len(clopeNoise.clusters), ". Число шумовых кластеров при базовой кластеризации: ", len(clope.NoiseClusters))
 
 with open('data/CLOPE_users_noise' + '.r=' + str(repulsion) + '.stopLimit=' + str(stopLimit) + '.pickle', 'wb') as f:
     pickle.dump(clope, f)

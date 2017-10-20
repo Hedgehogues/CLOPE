@@ -29,12 +29,12 @@ countTransfer = 1000000
 stopLimit = 300
 
 # Выполнение алгоритма
-clope = CLOPE.CData()
-clope.Init(dataGroups, iter, repulsion, isSaveHistory, noiseLimit)
-print("Инициализация завершена. Число кластеров: ", len(clope.Clusters))
+clope = CLOPE.Clope()
+clope.init(dataGroups, iter, repulsion, isSaveHistory, noiseLimit)
+print("Инициализация завершена. Число кластеров: ", len(clope.clusters))
 while countTransfer > stopLimit:
-    countTransfer = clope.NextStep(dataGroups, iter, repulsion, isSaveHistory, noiseLimit)
-    print("Число перемещений между кластерами", countTransfer, ". Число кластеров: ", len(clope.Clusters))
+    countTransfer = clope.next_step(dataGroups, iter, repulsion, isSaveHistory, noiseLimit)
+    print("Число перемещений между кластерами", countTransfer, ". Число кластеров: ", len(clope.clusters))
 
 with open('data/CLOPE_users' + '.r=' + str(repulsion) + '.stopLimit=' + str(stopLimit) + '.pickle', 'wb') as f:
     pickle.dump(clope, f)
