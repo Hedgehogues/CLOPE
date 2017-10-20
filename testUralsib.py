@@ -9,22 +9,25 @@ with open('data/clope_features.json', 'r') as f:
 clope = CLOPE.CData()
 # Начальные данные
 iter = 1000
-repulsion = 10
+repulsion = 2.3
 isSaveHist = True
 noiseLimit = 0
-max_count_clusters = 10
-random_state = 41
+max_count_clusters = 40
+random_state = 42
 # Инициализируем алгоритм
-clope.Init(clients, iter, 10, isSaveHist, noiseLimit, max_count_clusters, random_state)
+clope.Init(clients, iter, repulsion, isSaveHist, noiseLimit, max_count_clusters, random_state)
 clope.PrintHistoryCount()
 # Итерируемся
-while clope.NextStep(clients, iter, 2, isSaveHist, 5000, max_count_clusters, random_state) > 0:
-    clope.PrintHistoryCount()
+# while clope.NextStep(clients, iter, 2, isSaveHist, 5000, max_count_clusters, random_state) > 0:
+#    clope.PrintHistoryCount()
 
 # Выводим распределение по кластерам съедобных и несъедобных грибов
-answ = []
-for item in range(0, len(clope.Clusters)):
-    answ.append({'e': 0, 'p': 0})
+clusters = {}
 for itemTransact in clope.Transaction:
-    classter = clope.Transaction[itemTransact]
-print(answ)
+    cl_num = clope.Transaction[itemTransact]
+    if not cl_num in clusters:
+        clusters[cl_num] = []
+    clusters[cl_num].append(itemTransact)
+
+with open('data/clusters.json', 'w') as f:
+    json.dump(clusters, f)
