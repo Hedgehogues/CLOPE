@@ -27,8 +27,8 @@ for item in clope.Transaction:
 
 # Выполнение алгоритма для шумовых кластеров
 stopLimit = 0
-clopeNoise = CLOPE.Clope()
-clopeNoise.init(noiseTransaction, iter, repulsion, isSaveHistory, noiseLimit)
+clopeNoise = CLOPE.CLOPE()
+clopeNoise.init_clusters(noiseTransaction, iter, repulsion, isSaveHistory, noiseLimit)
 print("Инициализация завершена. Число кластеров: ", len(clopeNoise.clusters), ". Число шумовых кластеров при базовой кластеризации: ", len(clope.NoiseClusters))
 while countTransfer > stopLimit:
     countTransfer = clopeNoise.next_step(noiseTransaction, iter, repulsion, isSaveHistory, noiseLimit)

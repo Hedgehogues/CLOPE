@@ -3,37 +3,31 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-# Класс, описывающий кластер
 class Cluster:
-    # Гистограмма
-    histogram = {}
-    # Площадь гистограммы
-    area = 0.0
-    # Высота гистограммы (в смысле H = S / W). Данная величина нигде в явном виде не вычисляется. Хранится в классе для
-    # полноты описания класса и не более того.
-    height = 0.0
-    # Ширина гистограммы (в смысле числа элементов)
-    width = 0.0
-    # Градиент (в смысле G = H / W). Данная величина нигде в явном виде не вычисляется. Хранится в классе для полноты
-    # описания класса и не более того.
-    gradient = 0.0
-    # Число транзакций
-    count_transactions = 0
-    # История количества транзакций в кластерах
-    history_count_transact = np.array([])
 
     def __init__(self, history_count):
+        # История количества транзакций в кластерах
         self.history_count_transact = [0] * history_count
+        # Площадь гистограммы
         self.area = 0.0
+        # Высота гистограммы (в смысле H = S / W). Данная величина нигде в явном виде не вычисляется.
+        # Хранится в классе для полноты описания класса и не более того.
         self.height = 0.0
+        # Ширина гистограммы (в смысле числа элементов)
         self.width = 0.0
+        # Градиент (в смысле G = H / W). Данная величина нигде в явном виде не вычисляется. Хранится в классе
+        # для полноты описания класса и не более того.
         self.gradient = 0.0
-        self.count_transactions = 0.0
+        # Число транзакций
+        self.count_transactions = 0
+        # Гистограмма
         self.histogram = {}
 
-    # Добавить транзакцию в кластер. Перебираем все элементы гистограммы, достраиваем гистограмму
-    # Input parametres:
-    # transaction -- слайс с объектами (транзакция)
+    '''
+    Добавить транзакцию в кластер. Перебираем все элементы гистограммы, достраиваем гистограмму
+    Input parametres:
+    transaction -- слайс с объектами (транзакция)
+    '''
     def add_transaction(self, transaction):
         # Поочерёдно перебираем все элементы гистограммы и добавляем в соответствующий столбец гистограммы. Если
         # рассматриваемого элемента нет, то добавим новый столбец в гистограмму
@@ -49,13 +43,19 @@ class Cluster:
         # Подсчитываем число транзакций в кластере
         self.count_transactions += 1
 
-    # Удалить транзакцию из кластера. Перебираем все элементы гистограммы, убираем все элементы транзакции из
-    # гистограммы
-    # Input parametres:
-    # transaction -- слайс с объектами (транзакция)
-    # NOTE: внутри класса не происходит слежение за тем, какие транзакции добавляются, какие удаляются, поэтому, если в
-    # процессе модификации будет исключена транзакция, которая не была добавлена в соответствующий кластер, алгоритм
-    # выдаст неверный результат
+    '''
+    Удалить транзакцию из кластера. Перебираем все элементы гистограммы, убираем все элементы транзакции из
+    гистограммы
+    
+    Input parametres:
+    transaction -- слайс с объектами (транзакция)
+    Returned values:
+    величина градиента G(transaction)
+    
+    Внутри класса не происходит слежение за тем, какие транзакции добавляются, какие удаляются, поэтому, если в
+    процессе модификации будет исключена транзакция, которая не была добавлена в соответствующий кластер, алгоритм
+    выдаст неверный результат
+    '''
     def remove_transaction(self, transaction):
         for item in transaction:
             if self.histogram[item] == 0:
@@ -66,42 +66,41 @@ class Cluster:
         return self.gradient
 
 
-# Класс, описывающий работу с данными
-class Clope:
-    # Максимальный номер кластера
-    max_cluster_number = 0
-    # Список кластеров
-    clusters = {}  # CCluster
-    # Количество добавленных транзакций
-    count_transactions = 0
-    # Словарь. ключ/значение : номер транзакции/номер кластера
-    transaction = {}
-    # Номер итерации
-    iteration = 0
-    # Номера шумовых кластеров
-    # Данный объект необходим для того, чтобы не брать во внимание те объкты, которые были отнесены к шумовым
-    noise_clusters = {}
+class CLOPE:
 
-    def __init__(self, is_save_history=True, print_step=None):
-        self.clusters = {}
+    def __init__(self, is_save_history=True, print_step=1000, random_seed=None):
+        if random_seed is not None:
+            self.random_seed = random_seed
+        else:
+            self.random_seed = np.random.random_integers(0, 65536)
+        # Список кластеров
+        self.clusters = {}  # CCluster
+        # Номера шумовых кластеров
+        # Данный объект необходим для того, чтобы не брать во внимание те объкты, которые были отнесены к шумовым
         self.noise_clusters = {}
+        # Количество добавленных транзакций
         self.count_transactions = 0
+        # Номер итерации
         self.iteration = 0
+        # Словарь. ключ/значение : номер транзакции/номер кластера
         self.transaction = {}
+        # Максимальный номер кластера
         self.max_cluster_number = 0
         self.print_step = print_step
         self.is_save_history = is_save_history
 
-    # Рассчитывается изменение Goal, которое получит целевая функция при добавлении транзакции к кластеру clusterNumber.
-    # Кластер, доставляющий максимальное значение функции, будет искомым кластером (в который следует добавить
-    # транзакцию)
-    # Input parametres:
-    # transaction -- транзакция (список объектов)
-    # clusterNumber -- номер кластера, приращение для которого рассчитывается
-    # r -- отталкивание в смысле CLOPE
-    # Returned value:
-    # Возвращает значение изменения целевой функции при добавлении transaction к кластеру clusterNumber
-    def delta_add_transaction(self, transaction, cluster_number, r):
+    '''
+    Рассчитывается изменение Goal, которое получит целевая функция при добавлении транзакции к кластеру clusterNumber.
+    Кластер, доставляющий максимальное значение функции, будет искомым кластером (в который следует добавить
+    транзакцию)
+    Input parametres:
+    transaction -- транзакция (список объектов)
+    clusterNumber -- номер кластера, приращение для которого рассчитывается
+    r -- отталкивание в смысле CLOPE
+    Returned value:
+    Возвращает значение изменения целевой функции при добавлении transaction к кластеру clusterNumber
+    '''
+    def delta_transaction(self, transaction, cluster_number, r):
         area = self.clusters[cluster_number].area + len(transaction)
         width = self.clusters[cluster_number].width
         for item in transaction:
@@ -118,9 +117,11 @@ class Clope:
             old_delta_value = 0
         return new_delta_value - old_delta_value
 
-    # Функция удаления шума. Все кластеры, размер которых больше limit остаются
-    # Input parametres:
-    # limit -- уровень шума кластеров
+    '''
+    Функция удаления шума. Все кластеры, размер которых больше limit остаются
+    Input parametres:
+    limit -- уровень шума кластеров
+    '''
     def noise_reduction(self, limit):
         # Удаляем все пустые и зашумлённые кластеры
         new_clusters = {}
@@ -131,12 +132,14 @@ class Clope:
                 self.noise_clusters[item] = True
         self.clusters = new_clusters
 
-    # Вычисление целевой функции для всех уже сформированных кластеров
-    # Используется при модификации кластеров, либо их инициализации
-    # Input parametres:
-    # r -- вещественное число, обозначающие отталкивание кластеров в смысле CLOPE
-    # Returned value:
-    # Возвращает значение целевой функции
+    '''
+    Вычисление целевой функции для всех уже сформированных кластеров
+    Используется при модификации кластеров, либо их инициализации
+    Input parametres:
+    r -- вещественное число, обозначающие отталкивание кластеров в смысле CLOPE
+    Returned value:
+    Возвращает значение целевой функции
+    '''
     def get_goal_function(self, r):
         measure = 0.0
         # Перебираем все кластеры и для каждого рассчитываем его вес. Все веса суммируются в общую метрику
@@ -151,39 +154,19 @@ class Clope:
                 measure += item.area / (item.width ** r) * item.count_transactions / self.count_transactions
         return measure
 
-    # Модификация транзакции
-    # Пытаемся перебросить транзакцию (transaction) с номером id в другой класс
-    # Input parametres:
-    # transaction -- транзакция (слайс с объектами)
-    # id -- номер транзакции
-    # repulsion -- вещественное число, обозначающие отталкивание кластеров в смысле CLOPE
-    # isSaveHistory -- флаг, выставляемый при необходимости записи истории количества транзакций
-    # Returned value:
-    # Возвращает значение, отвечающие наличию изменения кластера или его отсутствию
-    def modify_transactions(self, transaction, id, repulsion=2, max_count_clusters=None):
-        # Смотрим, где данная транзакция лежит сейчас
-        cluster_number = self.transaction[id]
-        # Если транзакция относится к шумовому кластеру, то не пытаемся её поменять
-        if cluster_number in self.noise_clusters:
-            return 0
-        # Извлекаем транзакцию из текущего кластера
-        self.clusters[cluster_number].remove_transaction(transaction)
-        # Рассматриваем транзакцию как вновь пришедшую и добавляем в тот кластер, где значение целевой функции доставит
-        # максимум
-        return int(self.add_new_transaction(transaction, id, repulsion, max_count_clusters)
-                   != cluster_number)
-
-    # Добавление новой транзакции
-    # Пытаемся перераспределить транзакцию (transaction) с номером id в другой класс так, чтобы целевая функция приняла
-    # максимальное значение
-    # Input parametres:
-    # transaction -- транзакция (слайс с объектами)
-    # id -- номер транзакции
-    # repulsion -- вещественное число, обозначающие отталкивание кластеров в смысле CLOPE
-    # isSaveHistory -- флаг, выставляемый при необходимости записи истории количества транзакций
-    # Returned parameter:
-    # Возвращается номер кластера, в который была добавлена текущая транзакция
-    def add_new_transaction(self, transaction, id, repulsion=2,  max_count_clusters=None):
+    '''
+    Добавление новой транзакции
+    Пытаемся перераспределить транзакцию (transaction) с номером id в другой класс так, чтобы целевая функция приняла
+    максимальное значение
+    Input parametres:
+    transaction -- транзакция (слайс с объектами)
+    id -- номер транзакции
+    repulsion -- вещественное число, обозначающие отталкивание кластеров в смысле CLOPE
+    isSaveHistory -- флаг, выставляемый при необходимости записи истории количества транзакций
+    Returned parameter:
+    Возвращается номер кластера, в который была добавлена текущая транзакция
+    '''
+    def move_transaction(self, transaction, id, repulsion=2, max_count_clusters=None):
         r = repulsion
         max_value = None
         max_value_index = None
@@ -197,7 +180,7 @@ class Clope:
                     self.clusters[cluster_number].count_transactions
                 )
 
-            delta = self.delta_add_transaction(transaction, cluster_number, r)
+            delta = self.delta_transaction(transaction, cluster_number, r)
             if (delta > 0 or max_count_clusters is not None) and (max_value is None or delta > max_value):
                 max_value_index = cluster_number
                 max_value = delta
@@ -205,7 +188,7 @@ class Clope:
         # Добавляем транзакцию в новый кластер и смотрим на результат
         if max_count_clusters is None or len(self.clusters) < max_count_clusters:
             self.clusters[self.max_cluster_number] = Cluster(self.count_transactions)
-            if max_value is None or self.delta_add_transaction(transaction, self.max_cluster_number, r) > max_value:
+            if max_value is None or self.delta_transaction(transaction, self.max_cluster_number, r) > max_value:
                 max_value_index = self.max_cluster_number
                 self.max_cluster_number += 1
             else:
@@ -219,8 +202,10 @@ class Clope:
 
         return max_value_index
 
-    # Адаптивное вычисление порога шума. Порог вычистывается относительно медианы размеров кластеров (в числе
-    # транзакций). Берётся 3/4 медианы
+    '''
+    Адаптивное вычисление порога шума. Порог вычистывается относительно медианы размеров кластеров (в числе
+    транзакций). Берётся 3/4 медианы
+    '''
     def get_noise_limit(self, percentile=0.75):
         size_clusters = []
         for item in self.clusters:
@@ -233,23 +218,25 @@ class Clope:
             limit = size_clusters[median_element]
         return limit
 
-    # Инициализация алгоритма
-    # Input parametres:
-    # data -- слайс с транзакциями
-    # isPrint -- нужно ли печатать информацию о ходе выполнения (0 -- не нужно, если > 0 -- печатаем каждый isPrint раз)
-    # repulsion -- вещественное число, обозначающие отталкивание кластеров в смысле CLOPE
-    # isSaveHistory -- флаг, выставляемый при необходимости записи истории количества транзакций
-    # isNoiseReduction -- подавление шума (порог соответствует числу элементов в кластере, при котором он уничтожается).
-    #                     Если isNoiseReduction == -1, то порог выбирается адаптивно (всё то, что больше медианы
-    #                     остаётся)
-    def init(self, data, repulsion=2, is_noise_reduction=-1, noise_median_threshold=0.75, max_count_clusters=None,
-             random_state=42):
+    '''
+    Инициализация кластеров
+    Input parametres:
+    data -- слайс с транзакциями
+    isPrint -- нужно ли печатать информацию о ходе выполнения (0 -- не нужно, если > 0 -- печатаем каждый isPrint раз)
+    repulsion -- вещественное число, обозначающие отталкивание кластеров в смысле CLOPE
+    isSaveHistory -- флаг, выставляемый при необходимости записи истории количества транзакций
+    isNoiseReduction -- подавление шума (порог соответствует числу элементов в кластере, при котором он уничтожается).
+                        Если isNoiseReduction == -1, то порог выбирается адаптивно (всё то, что больше медианы
+                        остаётся)
+    '''
+    def init_clusters(self, data, repulsion=2, is_noise_reduction=-1, noise_median_threshold=0.75,
+                      max_count_clusters=None):
         index = 0
         keys = sorted(data.keys())
-        np.random.seed(random_state)
+        np.random.seed(self.random_seed)
         np.random.shuffle(keys)
         for item in keys:
-            self.add_new_transaction(data[item], item, repulsion, max_count_clusters)
+            self.move_transaction(data[item], item, repulsion, max_count_clusters)
             index += 1
             if self.print_step > 0 and index % self.print_step == 0:
                 print("Итерация: ", self.iteration, ". Номер шага", index, ". Число кластеров: ", len(self.clusters))
@@ -263,19 +250,20 @@ class Clope:
 
         self.iteration = 1
 
-    # Выполнение алгоритма. Выполнение следующего шага
-    # Input parametres:
-    # data -- слайс с транзакциями
-    # isPrint -- нужно ли печатать информацию о ходе выполнения (0 -- не нужно, если > 0 -- печатаем каждый isPrint раз)
-    # repulsion -- вещественное число, обозначающие отталкивание кластеров в смысле CLOPE
-    # isSaveHistory -- флаг, выставляемый при необходимости записи истории количества транзакций
-    # isNoiseReduction -- подавление шума (порог соответствует числу элементов в кластере, при котором он уничтожается).
-    #                     Если isNoiseReduction == -1, то порог выбирается адаптивно (всё то, что больше медианы
-    #                     остаётся)
-    # Returned parameter:
-    # Возвращается число операций по перенесению транзакции из кластера в кластер
-    def next_step(self, data, repulsion=2, is_noise_reduction=-1, noise_median_threshold=0.75, max_count_clusters=None,
-                  random_state=42):
+    '''
+    Выполнение алгоритма. Выполнение следующего шага
+    Input parametres:
+    data -- слайс с транзакциями
+    isPrint -- нужно ли печатать информацию о ходе выполнения (0 -- не нужно, если > 0 -- печатаем каждый isPrint раз)
+    repulsion -- вещественное число, обозначающие отталкивание кластеров в смысле CLOPE
+    isSaveHistory -- флаг, выставляемый при необходимости записи истории количества транзакций
+    isNoiseReduction -- подавление шума (порог соответствует числу элементов в кластере, при котором он уничтожается).
+                        Если isNoiseReduction == -1, то порог выбирается адаптивно (всё то, что больше медианы
+                        остаётся)
+    Returned parameter:
+    Возвращается число операций по перенесению транзакции из кластера в кластер
+    '''
+    def next_step(self, data, repulsion=2, is_noise_reduction=-1, noise_median_threshold=0.75, max_count_clusters=None):
 
         # Удаляем все пустые (или шумовые, если isNoiseReduction > 0) кластеры
         if is_noise_reduction < 0:
@@ -283,22 +271,41 @@ class Clope:
         self.noise_reduction(is_noise_reduction)
 
         index = 0
+        # Количество транзакций, которые были переложены
         eps = 0
         keys = sorted(data.keys())
-        np.random.seed(random_state)
+        np.random.seed(self.random_seed)
         np.random.shuffle(keys)
-        for item in keys:
-            eps += self.modify_transactions(data[item], item, repulsion, max_count_clusters)
+        for id in keys:
+            # Смотрим, где данная транзакция лежит сейчас
+            cluster_number = self.transaction[id]
+            transaction = data[id]
+            # Если транзакция относится к шумовому кластеру, то не пытаемся её поменять
+            if cluster_number in self.noise_clusters:
+                eps += 0
+            else:
+                # Извлекаем транзакцию из текущего кластера
+                self.clusters[cluster_number].remove_transaction(transaction)
+                # Рассматриваем транзакцию как вновь пришедшую и добавляем в тот кластер, где значение целевой
+                # функции доставит максимум
+                eps += int(
+                    self.move_transaction(transaction, id, repulsion, max_count_clusters)
+                    !=
+                    cluster_number
+                )
+
             index += 1
-            if self.print_step > 0 and index % self.print_step == 0:
+            if self.print_step is not None and self.print_step > 0 and index % self.print_step == 0:
                 print("Итерация: ", self.iteration, ". Номер шага", index, ". Число кластеров: ", len(self.clusters))
         self.iteration += 1
 
         self.noise_reduction(is_noise_reduction)
         return eps
 
-    # Рисуем график, демонстрирующий количество транзакций в различных классах
-    def print_history_count(self):
+    '''
+    Рисуем график, демонстрирующий количество транзакций в различных классах
+    '''
+    def print_history_count(self, repulsion, seed):
         # Длина всех векторов с историями одинакова. В связи с этим, берём длину первого
         len_history = len(list(self.clusters.values())[0].history_count_transact)
         for index_cluster in self.clusters:
@@ -309,7 +316,8 @@ class Clope:
             else:
                 y = np.array(range(0, len_history))
             plt.plot(x, y)
-        plt.xlabel(u"Iteration number")
-        plt.ylabel(u"Count transactions")
-        plt.title(u"Charts for changing the number of transactions in clusters")
+        plt.xlabel(u"Номер итерации")
+        plt.ylabel(u"Количество транзакций")
+        plt.title(u"Количество транзакций в различных кластерах. \nКоличество кластеров: "+str(len(self.clusters))+
+                  u".\n Отталкивание: "+str(repulsion)+". Seed: "+str(seed))
         plt.show()

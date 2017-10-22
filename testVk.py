@@ -4,8 +4,6 @@ import copy
 import CLOPE
 import pickle
 
-
-
 with open('data/users.pickle', 'rb') as f:
     dataGroups = pickle.load(f)
 
@@ -21,19 +19,18 @@ for item in dataGroups:
 dataGroups = copy.deepcopy(dataNew)
 
 # Инициализация параметров алгоритма
-repulsion = 1.0015
-noiseLimit = -1
-isSaveHistory = False
-iter = 10000
+repulsion = 1.1
+noiseLimit = 0
 countTransfer = 1000000
 stopLimit = 300
 
 # Выполнение алгоритма
-clope = CLOPE.Clope()
-clope.init(dataGroups, iter, repulsion, isSaveHistory, noiseLimit)
+print('Start')
+clope = CLOPE.CLOPE()
+clope.init_clusters(dataGroups, repulsion, noiseLimit)
 print("Инициализация завершена. Число кластеров: ", len(clope.clusters))
 while countTransfer > stopLimit:
-    countTransfer = clope.next_step(dataGroups, iter, repulsion, isSaveHistory, noiseLimit)
+    countTransfer = clope.next_step(dataGroups, repulsion, noiseLimit)
     print("Число перемещений между кластерами", countTransfer, ". Число кластеров: ", len(clope.clusters))
 
 with open('data/CLOPE_users' + '.r=' + str(repulsion) + '.stopLimit=' + str(stopLimit) + '.pickle', 'wb') as f:

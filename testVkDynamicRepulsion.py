@@ -29,8 +29,8 @@ countTransfer = 1000000
 stopLimit = 300
 
 # Выполнение алгоритма
-clope = CLOPE.Clope()
-clope.init(dataGroups, iter, repulsion, isSaveHistory, noiseLimit)
+clope = CLOPE.CLOPE()
+clope.init_clusters(dataGroups, iter, repulsion, isSaveHistory, noiseLimit)
 print("Инициализация завершена. Число кластеров: ", len(clope.clusters))
 for iteration in range(0, 10):
     print("Iteration: ", iteration)
